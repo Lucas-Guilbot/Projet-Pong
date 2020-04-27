@@ -1,0 +1,115 @@
+<html>
+ <body>
+ 	<div style="position:absolute;top:65%">
+ 		<table style ="    border-collapse: collapse;
+    					   border: 2px solid rgb(200, 200, 200);
+    					   letter-spacing: 1px;
+    					   font-family: sans-serif;
+    					   font-size: 1.9rem;">
+ 			<caption> Règles </caption>
+ 			<tr>
+        		<td> </td>
+        		<td>Joueur 1</td>
+        		<td>Joueur 2</td>
+        		<td>Joueur 3</td>	
+        		<td>Joueur 4</td>
+        	</tr>
+        	<tr>
+        		<td>Monter </td>
+        		<td>&uarr;</td>
+        		<td>a</td>
+        		<td>t</td>
+        		<td>p</td>
+        	</tr>
+         	<tr>
+        		<td>Descendre </td>
+        		<td>&darr;</td>
+        		<td>q</td>
+        		<td>g</td>
+        		<td>m</td>
+        	</tr>  
+        </table>     	
+
+	</div>
+  <script src="./js/game.js"></script>
+  <script src="./js/game.display.js"></script>
+  <script src="./js/game.keycode.js"></script>
+  <script src="./js/game.control.js"></script>
+  <script src="./js/game.ai.js"></script>
+  <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+
+<script>
+
+    (function () {
+
+      const socket = io()
+      // début du code isolé
+      var requestAnimId;
+      game.socket = socket;
+      var initialisation = function() {
+        // le code de l'initialisation
+      
+		}
+		
+		socket.on('init', function(msg){
+			if(game.loaded === false)
+			{
+				game.clientId = socket.id;
+				game.init(msg)
+				requestAnimId = window.requestAnimationFrame(main); // premier appel de main au rafraîchissement de la page	
+			}
+		});
+		
+		
+		socket.on('ball', function(msg){			
+			game.ball.move(msg);
+		
+		});
+		socket.on('stopIaReturn', function(msg){	
+			game.control.stopIa(msg[0]);
+			game.disabledPlayers(msg[1]);
+		});
+		
+
+		socket.on('players', function(msg){		
+			game.movePlayers(msg)
+			
+			if(game.ais[0] !== undefined && game.ais[0].enabled === true)
+				game.ais[0].move();
+
+			if(game.ais[1] !== undefined && game.ais[1].enabled === true)
+				game.ais[1].move();
+
+			if( game.ais[2] !== undefined && game.ais[2].enabled === true)
+				game.ais[2].move();			
+
+			socket.emit('movePlayers',game.coordPlayers());
+		});
+      
+		socket.on('score', function(msg){
+			game.updateScore(msg);
+		});
+      
+		function main (){
+		
+			game.clearLayer(game.playersBallLayer);
+			game.displayPlayers();
+			game.displayBall();
+			if ( game.ball.inGame ) {
+				game.lostBall();
+			}
+		
+			requestAnimId = window.requestAnimationFrame(main);
+		}
+      
+      window.onload = initialisation; // appel de la fonction initialisation au chargement de la page
+      // association des méthodes aux évènements :
+      // onKeyDown = à l'appui de la touche
+      // onKeyUp = au relèvement de la touche
+     
+      // fin du code isolé
+    })();
+</script>
+</body>
+</html>
